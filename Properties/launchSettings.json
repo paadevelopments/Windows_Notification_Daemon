@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "NotificationDaemon": {
+      "commandName": "Project",
+      "commandLineArgs": "-url \"ws://localhost:9000/app/wss/notify\""
+    }
+  }
+}
