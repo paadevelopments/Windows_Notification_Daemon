@@ -3,9 +3,9 @@ using Newtonsoft.Json.Linq;
 using System.Net.WebSockets;
 using System.Text;
 
-namespace WebSocketClientExample
+namespace NotificationDaemon
 {
-    class Program
+    class Daemon
     {
         private static async Task Main(string[] args)
         {
@@ -27,6 +27,12 @@ namespace WebSocketClientExample
                 return;
             }
             Uri serverUri = new Uri(url);
+
+            // CancellationTokenSource source = new CancellationTokenSource();
+            // CancellationToken token;
+
+            // Establish WS connection
+            BeginConnection:
             ClientWebSocket webSocket = new ClientWebSocket();
             try
             {
@@ -34,59 +40,88 @@ namespace WebSocketClientExample
             }
             catch
             {
-                Console.WriteLine("Unable to connect");
-                return;
+                Console.WriteLine("Unable to connect. Retrying..");
+                Thread.Sleep(5000);
+                goto BeginConnection;
             }
             Console.WriteLine("WebSocket connection opened");
+
+            // Set cancelation token for message listener
+            // token = source.Token;
 
             // Set "onMessage" listener to websocket to get sent messages from server (unsent notifications)
             _ = Task.Run(async () => {
                 while (webSocket.State == WebSocketState.Open)
                 {
-                    WebSocketReceiveResult result;
+                    WebSocketReceiveResult? result = null;
                     ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[1024]);
                     do
                     {
-                        result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
-                        #pragma warning disable CS8604
-                        string message = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
-                        #pragma warning restore CS8604
-                        Console.WriteLine("Received message: " + message);
-
-                        // Parse message JSON
-                        dynamic messages = new string[] {};
                         try
                         {
-                            messages = JArray.Parse(message);
-                        } catch(Exception ex)
-                        {
-                            Console.WriteLine(ex);
-                            return;
-                        }
+                            result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
+                            #pragma warning disable CS8604
+                            string message = Encoding.UTF8.GetString(buffer.Array, 0, result!.Count);
+                            #pragma warning restore CS8604
+                            Console.WriteLine("Received message: " + message);
 
-                        // Loop and show notification
-                        foreach (var content in messages)
+                            // Parse message JSON
+                            dynamic messages = new string[] { };
+                            try
+                            {
+                                messages = JArray.Parse(message);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine(ex);
+                                return;
+                            }
+
+                            // Loop and show notification
+                            foreach (var content in messages)
+                            {
+                                new ToastContentBuilder()
+                                .AddArgument("action", "openApp").AddText("Daemon Alert").AddText(content.ToString()).Show();
+                            }
+                        }
+                        catch (WebSocketException webSocketException)
                         {
-                            new ToastContentBuilder()
-                            .AddArgument("action", "openApp").AddText("Daemon Alert").AddText(content.ToString()).Show();
+                            if (webSocketException.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+                            {
+                                Console.WriteLine("\n\nConnection closed. Will reconnect on next request.\n\n");
+                                // Turns out, canceling the task will permanently remove the lsitener.
+                                // source?.Cancel();
+                            }
                         }
                     }
-                    while (!result.EndOfMessage);
+                    while (!result!.EndOfMessage);
                 }
             });
+            // },token);
 
             // Begin periodic "send" trigger message to websocket endpoint
-            do
+            SendAction:
+            if (webSocket.State == WebSocketState.Open)
             {
-                string sendMessage = "Hello server, get me the unsent notifications";
-                ArraySegment<byte> sendBuffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(sendMessage));
-                await webSocket.SendAsync(sendBuffer, WebSocketMessageType.Text, true, CancellationToken.None);
-                Console.WriteLine("\n\nSent message: " + sendMessage);
-                
-                // Add some trigger interval delay (in milliseconds)
-                // 60000ms == 1 minute
-                Thread.Sleep(60000);
-            } while (true);
+                try
+                {
+                    string sendMessage = "Hello server, get me the unsent notifications";
+                    ArraySegment<byte> sendBuffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(sendMessage));
+                    await webSocket.SendAsync(sendBuffer, WebSocketMessageType.Text, true, CancellationToken.None);
+                    Console.WriteLine("\n\nSent message: " + sendMessage);
+                }
+                catch (WebSocketException webSocketException)
+                {
+                    Console.WriteLine("Send error due to " + webSocketException.ToString());
+                }
+                Thread.Sleep(30000);
+                goto SendAction;
+            }
+            else
+            {
+                Thread.Sleep(5000);
+                goto BeginConnection;
+            }
         }
     }
 }

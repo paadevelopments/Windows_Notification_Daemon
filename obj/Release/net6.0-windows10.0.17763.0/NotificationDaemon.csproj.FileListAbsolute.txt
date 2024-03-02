@@ -23,3 +23,4 @@ C:\Users\paaco\Documents\project_external\smart_learners\app\windows_ws_builder\
 C:\Users\paaco\Documents\project_external\smart_learners\app\windows_ws_builder\NotificationDaemon\obj\Release\net6.0-windows10.0.17763.0\NotificationDaemon.pdb
 C:\Users\paaco\Documents\project_external\smart_learners\app\windows_ws_builder\NotificationDaemon\obj\Release\net6.0-windows10.0.17763.0\NotificationDaemon.genruntimeconfig.cache
 C:\Users\paaco\Documents\project_external\smart_learners\app\windows_ws_builder\NotificationDaemon\obj\Release\net6.0-windows10.0.17763.0\ref\NotificationDaemon.dll
+C:\Users\paaco\Documents\project_external\smart_learners\app\windows_ws_builder\NotificationDaemon\obj\Release\net6.0-windows10.0.17763.0\NotificationDaemon.sourcelink.json

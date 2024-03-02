@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NotificationDaemon")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4426bbc8e182465af6740f526a4ce4d6671d25e0")]
 [assembly: System.Reflection.AssemblyProductAttribute("NotificationDaemon")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NotificationDaemon")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
